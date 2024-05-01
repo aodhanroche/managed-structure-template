@@ -66,12 +66,12 @@ event_driver = GriptapeCloudEventListenerDriver(
 #### BEGIN EXAMPLE: USING A GRIPTAPE AGENT
 # This example uses a Griptape Agent. The Agent will generate the correct events to indicate 
 # if the run has succeeded or failed.
-structure = Agent(
-    tools=[Calculator(off_prompt=False)],
-    event_listeners=[EventListener(driver=event_driver)],
-)
-
-structure.run(input)
+# structure = Agent(
+#     tools=[Calculator(off_prompt=False)],
+#     event_listeners=[EventListener(driver=event_driver)],
+# )
+#
+# structure.run(input)
 #### END EXAMPLE
 
 #### BEGIN EXAMPLE: NOT USING A GRIPTAPE STRUCTURE
@@ -81,13 +81,13 @@ structure.run(input)
 # 1. Comment out the previous example
 # 2. Un-comment the example below
 
-# print("Dropping in on this gnarly half-pipe.")
-# output_artifact = TextArtifact("Nosebone fip into a 360 Varial McTwist!")
+print("Dropping in on this gnarly half-pipe.")
+output_artifact = TextArtifact("Nosebone fip into a 360 Varial McTwist!")
 
-# task_input = TextArtifact(value=sys.argv[1])
-# done_event = FinishStructureRunEvent(
-#     output_task_input=task_input, output_task_output=output_artifact
-# )
+task_input = TextArtifact(value=sys.argv[1])
+done_event = FinishStructureRunEvent(
+    output_task_input=task_input, output_task_output=output_artifact
+)
 
-# event_driver.publish_event(done_event)
+event_driver.publish_event(done_event)
 #### END EXAMPLE
