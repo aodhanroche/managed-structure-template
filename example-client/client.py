@@ -1,21 +1,21 @@
 import os
 import sys
 import time
-
-from requests.exceptions import HTTPError
+from typing import Optional
 
 from utils import (
     create_structure_run,
     get_structure_run,
     get_structure_run_events,
     print_streaming_events,
+    get_structure_run_logs,
 )
+from requests.exceptions import HTTPError
 
-HOST = "http://127.0.0.1:5000"
 GT_STRUCTURE_ID = os.environ["GT_STRUCTURE_ID"]
 
 
-def run_structure(input: str) -> str:
+def run_structure(input: str) -> Optional[str]:
     """Run a Structure program.
 
     Args:
@@ -29,26 +29,36 @@ def run_structure(input: str) -> str:
     structure_run = create_structure_run(GT_STRUCTURE_ID, {}, [input])
 
     # Runs are asynchronous, so we need to poll the status until it's no longer running.
-    run_id = structure_run["run_id"]
+    structure_run_id = structure_run["structure_run_id"]
     status = structure_run["status"]
-    printed_events = set()
-    while status == "RUNNING":
-        structure_run = get_structure_run(run_id)
+    printed_event_ids = set()  # Keep track of which events we've printed.
+    while status not in ("SUCCEEDED", "FAILED"):
+        structure_run = get_structure_run(structure_run_id)
         status = structure_run["status"]
 
-        # Print all new CompletionChunkEvents.
-        event_list = get_structure_run_events(run_id)
+        # You can comment out this block if you don't want to streaming events.
+        event_list = get_structure_run_events(structure_run_id)
         events = event_list["events"]
-        printed_events = print_streaming_events(events, printed_events)
+        printed_event_ids = print_streaming_events(events, printed_event_ids)
 
         time.sleep(1)  # Poll every second.
 
-    if structure_run["status"] == "COMPLETED":
-        print(structure_run["stdout"])
-        return structure_run["output"]["value"]
+    logs = get_structure_run_logs(structure_run_id)
+
+    if structure_run["status"] == "SUCCEEDED":
+        stdout = next(
+            (log["message"] for log in logs["logs"] if log["stream"] == "stdout"),
+            None,
+        )
+        print(stdout)
+
+        return structure_run["output"]["value"] if "output" in structure_run else None
     else:
-        print(structure_run["stdout"])
-        raise Exception(structure_run["stderr"])
+        stderr = next(
+            (log["message"] for log in logs["logs"] if log["stream"] == "stderr"),
+            None,
+        )
+        raise ValueError(stderr)
 
 
 if __name__ == "__main__":
