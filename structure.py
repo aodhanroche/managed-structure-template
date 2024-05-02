@@ -52,7 +52,7 @@ def get_listener_api_key() -> str:
 if not is_running_in_managed_environment():
     load_dotenv()
 
-input = "What is 6^7" #sys.argv[1]
+input = sys.argv[1]
 
 # We need an event driver to communicate events from our program back to our
 # host, which could be the locally-run Skatepark or Griptape Cloud.
